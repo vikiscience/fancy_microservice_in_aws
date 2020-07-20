@@ -2,10 +2,10 @@ pipeline {
     environment {
         registryUrl = 'https://hub.docker.com/r/'
         registry = "bitelds/demos"
+        image_tag = 'fancy_app_image'
+        image_tag_full = "${registry}/${image_tag}"
         dockerImage = ''
         port = 8085
-        image_tag = 'fancy_app_image'
-        image_tag_full = registry + '/' + image_tag
     }
     agent none
     stages {
@@ -91,7 +91,7 @@ pipeline {
             agent any
             steps {
                 script {
-                    dockerImage = docker.build("${env.registry}/${env.image_tag}:${env.BUILD_ID}")
+                    dockerImage = docker.build("${env.image_tag_full}:${env.BUILD_ID}")
                     //dockerImage = docker.build registry + "fancy_app_image:$BUILD_NUMBER"
                     dockerImage.inside {
                         withEnv(['PYLINTHOME=.']) {
@@ -115,7 +115,7 @@ pipeline {
         stage('Test remote image') {
             agent {
                 docker {
-                    image 'bitelds/demos/fancy_app_image'
+                    image "${env.image_tag_full}"
                     registryUrl "${env.registryUrl}"
                 }
             }
@@ -128,8 +128,7 @@ pipeline {
         stage('Remove unused docker image') {
             agent any
             steps{
-                sh "docker rmi ${env.BUILD_NUMBER}"
-                sh "docker rmi ${env.registry}/${env.image_tag}:${env.BUILD_ID}"
+                sh "docker rmi ${env.image_tag_full}:${env.BUILD_ID}"
             }
         }
     }
