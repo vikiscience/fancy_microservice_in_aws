@@ -90,18 +90,31 @@ pipeline {
                         withEnv(['PYLINTHOME=.']) {
                             sh "pylint --exit-zero --disable=R,C,W1203 app.py"
                         }
-                        sh 'make test'
+                        //sh 'make test' // not working
                     }
                 }
             }
         }
-        stage('Deploy image to Docker Hub') {
+        stage('Push image to Docker Hub') {
             agent any
             steps {
                 script {
                     docker.withRegistry('') {
                         dockerImage.push()
                     }
+                }
+            }
+        }
+        stage('Test remote image') {
+            agent {
+                docker {
+                    image 'bitelds/demos/fancy_app_image'
+                    registryUrl 'https://hub.docker.com/r/'
+                }
+            }
+            steps {
+                catchError {
+                    sh "make test"
                 }
             }
         }
