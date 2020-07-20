@@ -1,6 +1,7 @@
 pipeline {
     environment {
         registry = "bitelds/demos"
+        dockerImage = ''
     }
     agent none
     stages {
@@ -19,12 +20,27 @@ pipeline {
                 sh 'tidy -q -e templates/*.html'
             }
         }
-        stage('Build') {
+        stage('Build image') {
             agent any
             steps {
                 script {
-                    docker.build registry + ":$BUILD_NUMBER"
+                    dockerImage = docker.build registry + "fancy_app_image:$BUILD_NUMBER"
                 }
+            }
+        }
+        stage('Deploy image to Docker Hub') {
+            agent any
+            steps {
+                script {
+                    docker.withRegistry('') {
+                        dockerImage.push()
+                    }
+                }
+            }
+        }
+        stage('Remove unused docker image') {
+            steps{
+                sh "docker rmi $registry/fancy_app_image:$BUILD_NUMBER"
             }
         }
     }
