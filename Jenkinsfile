@@ -128,7 +128,7 @@ pipeline {
 
                 script {
                     docker.withRegistry("${env.registryUrl}", ${env.registryCreds}) {
-                        dockerImage.push("${env.BUILD_ID}")
+                        dockerImage.push()
                         dockerImage.push("latest")
                     }
                 }
