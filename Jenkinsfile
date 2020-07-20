@@ -10,8 +10,8 @@ pipeline {
         stage('Echo') {
             agent any
             steps {
-                sh "echo $(env.BUILD_ID)"
-                sh "echo $(env.BUILD_NUMBER)"
+                sh "echo ${env.BUILD_ID}"
+                sh "echo ${env.BUILD_NUMBER}"
             }
         }
         stage('Lint HTML') {
@@ -106,8 +106,9 @@ pipeline {
             }
         }
         stage('Remove unused docker image') {
+            agent any
             steps{
-                sh "docker rmi ${env.$BUILD_NUMBER}"
+                sh "docker rmi ${env.BUILD_NUMBER}"
                 sh "docker rmi ${env.registry}/${env.image_tag}:${env.BUILD_ID}"
             }
         }
