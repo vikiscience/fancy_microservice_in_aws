@@ -1,18 +1,20 @@
 pipeline {
-    agent {
-        dockerfile true
-    }
+    agent none
     stages {
         stage('Lint SRC') {
-             steps {
-                 sh 'pip list'
-                 sh 'make lint'
-             }
+            agent {
+                dockerfile true
+            }
+            steps {
+                sh 'pip list'
+                sh 'make lint'
+            }
         }
         stage('Lint HTML') {
-             steps {
-                 sh 'tidy -q -e templates/*.html'
-             }
+            agent all
+            steps {
+                sh 'tidy -q -e templates/*.html'
+            }
         }
         stage('Build') {
             agent {
