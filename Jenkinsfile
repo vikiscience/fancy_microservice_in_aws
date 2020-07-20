@@ -1,6 +1,7 @@
 pipeline {
     environment {
         registryUrl = 'https://hub.docker.com/r/'
+        registryCreds = "docker-hub-creds"
         registry = "bitelds/demos"
         image_tag = 'fancy_app_image'
         image_tag_full = "${registry}/${image_tag}"
@@ -33,6 +34,14 @@ pipeline {
                 sh 'hadolint Dockerfile'
             }
         }
+        stage('Check images') {
+            agent any
+            steps {
+                // build image for testing
+                //sh "docker build --no-cache --rm -t ${env.image_tag} ."
+                sh "docker images"
+            }
+        }
         /*
         stage('Lint code') {
             agent {
@@ -54,14 +63,6 @@ pipeline {
             }
         }
         */
-        stage('Check images') {
-            agent any
-            steps {
-                // build image for testing
-                //sh "docker build --no-cache --rm -t ${env.image_tag} ."
-                sh "docker images"
-            }
-        }
         /*
         stage('Test code') {
             agent any
@@ -86,7 +87,6 @@ pipeline {
 
             }
         }
-        */
         stage('Build image') {
             agent any
             steps {
@@ -102,34 +102,52 @@ pipeline {
                 }
             }
         }
+        */
+        stage('Build image') {
+            agent any
+            steps {
+                sh "docker build --no-cache --rm -t ${env.image_tag_full}:${env.BUILD_ID} -t ${env.image_tag_full}:latest ."
+            }
+        }
+        stage('Run image and test') {
+            agent any
+            steps {
+                sh "docker run -d --rm -p ${env.port}:${env.port} --name ${env.image_tag}"
+                catchError {
+                    sh 'make lint'
+                    sh 'make test'
+                }
+            }
+        }
         stage('Push image to Docker Hub') {
             agent any
             steps {
+                /*
                 script {
                     docker.withRegistry("${env.registryUrl}") {
                         dockerImage.push()
                     }
                 }
+                */
+                sh "docker login --username bitelds -p ${env.registryCreds}"
+                sh "docker push ${env.image_tag_full}:${env.BUILD_ID}"
+                sh "docker push ${env.image_tag_full}:latest"
             }
         }
-        stage('Test remote image') {
-            agent {
-                docker {
-                    image "${env.image_tag_full}"
-                    registryUrl "${env.registryUrl}"
-                }
-            }
-            steps {
-                catchError {
-                    sh "make test"
-                }
-            }
-        }
+        /*
         stage('Remove unused docker image') {
             agent any
-            steps{
+            steps{  //todo stop container
                 sh "docker rmi ${env.image_tag_full}:${env.BUILD_ID}"
             }
+        }*/
+    }
+    post {
+        always {
+            sh "docker stop ${env.image_tag}"
+            sh "docker rmi ${env.image_tag_full}:${env.BUILD_ID}"
+            sh "docker rmi ${env.image_tag_full}:latest"
+            sh "docker system prune"
         }
     }
 }
