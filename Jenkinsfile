@@ -11,7 +11,7 @@ pipeline {
             }
         }
         stage('Lint HTML') {
-            agent all
+            agent any
             steps {
                 sh 'tidy -q -e templates/*.html'
             }
