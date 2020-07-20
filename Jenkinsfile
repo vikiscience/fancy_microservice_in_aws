@@ -32,7 +32,10 @@ pipeline {
                 // check packages
                 sh 'pip list'
                 // run tests
-                sh 'make lint'
+                //sh 'make lint' --> error in Jenkins pipeline, which tries to create some file
+                withEnv(['PYLINTHOME=.']) {
+                    sh "pylint --disable=R,C,W1203 app.py"
+                }
             }
         }
         stage('Check images') {
