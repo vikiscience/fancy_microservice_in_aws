@@ -2,7 +2,7 @@ pipeline {
     environment {
         //registryUrl = 'https://hub.docker.com/r/'
         registryUrl = "https://registry-1.docker.io/v2/"
-        registryCreds = "docker-hub-creds"
+        registryCreds = credentials("docker-hub-creds")
         registry = "bitelds/demos"
         image_tag = 'fancy_app_image'
         image_tag_full = "${registry}/${image_tag}"
@@ -17,6 +17,7 @@ pipeline {
                 sh "echo ${env.BUILD_ID}"
                 sh "echo ${env.BUILD_NUMBER}"
                 sh "echo ${env.registryUrl}"
+                sh "echo ${env.registryCreds}"
                 sh "echo ${env.registry}"
                 sh "echo ${env.image_tag}"
                 sh "echo ${env.image_tag_full}"
@@ -125,17 +126,17 @@ pipeline {
         stage('Push image to Docker Hub') {
             agent any
             steps {
-
+                /*
                 script {
                     docker.withRegistry("${env.registryUrl}", "${env.registryCreds}") {
                         dockerImage.push()
                         dockerImage.push("latest")
                     }
                 }
-
-                //sh "docker login --username bitelds -p ${env.registryCreds}"
-                //sh "docker push ${env.image_tag_full}:${env.BUILD_ID}"
-                //sh "docker push ${env.image_tag_full}:latest"
+                */
+                sh "docker login --username bitelds -p ${env.registryCreds}"
+                sh "docker push ${env.image_tag_full}:${env.BUILD_ID}"
+                sh "docker push ${env.image_tag_full}:latest"
             }
         }
         /*
