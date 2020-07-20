@@ -21,7 +21,10 @@ pipeline {
         }
         stage('Lint code') {
             agent {
-                dockerfile true
+                //dockerfile true
+                dockerfile {
+                    args "--no-cache --rm -t ${env.image_tag}"
+                }
             }
             steps {
                 // check packages
@@ -30,23 +33,38 @@ pipeline {
                 sh 'make lint'
             }
         }
-        stage('Build') {
+        stage('Check images') {
             agent any
             steps {
                 // build image for testing
-                sh "docker build --no-cache --rm -t ${env.image_tag} ."
+                //sh "docker build --no-cache --rm -t ${env.image_tag} ."
                 sh "docker images"
             }
         }
         stage('Test code') {
             agent any
             steps {
-                // run image for testing
-                sh "docker run -i -t --rm -p ${env.port}:${env.port} ${env.image_tag}"
-                //sh 'make test'
+                // allow for errors in this step
+                catchError {
+                    // run image for testing
+                    //sh "docker run -i -t --rm -p ${env.port}:${env.port} ${env.image_tag}"
+                    //sh 'make test'
+                    sh '''
+                    DOCKER_RUN_OPTIONS="-i --rm"
+
+                    # Only allocate tty if we detect one
+                    if [ -t 0 ] && [ -t 1 ]; then
+                        DOCKER_RUN_OPTIONS="$DOCKER_RUN_OPTIONS -t"
+                    fi
+
+                    docker run $DOCKER_RUN_OPTIONS --name ${env.image_tag} ${env.image_tag}
+                    '''
+                    sh "docker run $DOCKER_RUN_OPTIONS --rm -p ${env.port}:${env.port} ${env.image_tag}"
+                }
+
             }
         }
-        stage('Build image') {
+        stage('Build image again') {
             agent any
             steps {
                 script {
