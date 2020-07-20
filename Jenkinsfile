@@ -127,7 +127,7 @@ pipeline {
             steps {
 
                 script {
-                    docker.withRegistry("${env.registryUrl}", ${env.registryCreds}) {
+                    docker.withRegistry("${env.registryUrl}", "${env.registryCreds}") {
                         dockerImage.push()
                         dockerImage.push("latest")
                     }
