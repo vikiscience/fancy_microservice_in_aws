@@ -7,6 +7,13 @@ pipeline {
     }
     agent none
     stages {
+        stage('Echo') {
+            agent any
+            steps {
+                sh "echo $(env.BUILD_ID)"
+                sh "echo $(env.BUILD_NUMBER)"
+            }
+        }
         stage('Lint HTML') {
             agent any
             steps {
@@ -19,6 +26,7 @@ pipeline {
                 sh 'hadolint Dockerfile'
             }
         }
+        /*
         stage('Lint code') {
             agent {
                 //dockerfile true
@@ -34,10 +42,11 @@ pipeline {
                 // run tests
                 //sh 'make lint' --> error in Jenkins pipeline, which tries to create some file
                 withEnv(['PYLINTHOME=.']) {
-                    sh "pylint --disable=R,C,W1203 app.py"
+                    sh "pylint --exit-zero --disable=R,C,W1203 app.py"
                 }
             }
         }
+        */
         stage('Check images') {
             agent any
             steps {
@@ -46,6 +55,7 @@ pipeline {
                 sh "docker images"
             }
         }
+        /*
         stage('Test code') {
             agent any
             steps {
@@ -69,13 +79,17 @@ pipeline {
 
             }
         }
-        stage('Build image again') {
+        */
+        stage('Build image') {
             agent any
             steps {
                 script {
                     dockerImage = docker.build("${env.registry}/${env.image_tag}:${env.BUILD_ID}")
                     //dockerImage = docker.build registry + "fancy_app_image:$BUILD_NUMBER"
                     dockerImage.inside {
+                        withEnv(['PYLINTHOME=.']) {
+                            sh "pylint --exit-zero --disable=R,C,W1203 app.py"
+                        }
                         sh 'make test'
                     }
                 }
@@ -93,6 +107,7 @@ pipeline {
         }
         stage('Remove unused docker image') {
             steps{
+                sh "docker rmi ${env.$BUILD_NUMBER}"
                 sh "docker rmi ${env.registry}/${env.image_tag}:${env.BUILD_ID}"
             }
         }
