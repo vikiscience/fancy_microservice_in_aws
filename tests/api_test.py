@@ -6,7 +6,7 @@ import unittest
 
 
 class MyAPITestCase(unittest.TestCase):
-    api_url = 'http://localhost:8080'
+    api_url = 'http://localhost:8085'
     payload = {}
 
     def test_health(self):

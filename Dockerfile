@@ -1,7 +1,7 @@
 FROM python:3.7.3-stretch
 
 ENV app_name=fancy_app
-ENV port=8080
+ENV port=8085
 
 ## Step 1:
 # Create a working directory
