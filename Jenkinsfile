@@ -151,7 +151,7 @@ pipeline {
             sh "docker stop ${env.image_name}"
             sh "docker rmi ${env.image_name_full}:${env.BUILD_ID}"
             sh "docker rmi ${env.image_name_full}:latest"
-            sh "docker system prune"
+            sh "docker system prune -f"
         }
     }
 }
