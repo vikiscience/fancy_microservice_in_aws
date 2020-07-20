@@ -1,6 +1,7 @@
 pipeline {
     environment {
-        registryUrl = 'https://hub.docker.com/r/'
+        //registryUrl = 'https://hub.docker.com/r/'
+        registryUrl = "https://registry-1.docker.io/v2/"
         registryCreds = "docker-hub-creds"
         registry = "bitelds/demos"
         image_tag = 'fancy_app_image'
@@ -114,24 +115,27 @@ pipeline {
             steps {
                 sh "docker run -d --rm -p ${env.port}:${env.port} --name ${env.image_tag} ${env.image_tag_full}:${env.BUILD_ID}"
                 catchError {
-                    sh 'make lint'
-                    sh 'make test'
+                    withEnv(['PYLINTHOME=.']) {
+                        sh "pylint --exit-zero --disable=R,C,W1203 app.py"
+                    }
+                    sh 'pytest'
                 }
             }
         }
         stage('Push image to Docker Hub') {
             agent any
             steps {
-                /*
+
                 script {
-                    docker.withRegistry("${env.registryUrl}") {
-                        dockerImage.push()
+                    docker.withRegistry("${env.registryUrl}", ${env.registryCreds}) {
+                        dockerImage.push("${env.BUILD_ID}")
+                        dockerImage.push("latest")
                     }
                 }
-                */
-                sh "docker login --username bitelds -p ${env.registryCreds}"
-                sh "docker push ${env.image_tag_full}:${env.BUILD_ID}"
-                sh "docker push ${env.image_tag_full}:latest"
+
+                //sh "docker login --username bitelds -p ${env.registryCreds}"
+                //sh "docker push ${env.image_tag_full}:${env.BUILD_ID}"
+                //sh "docker push ${env.image_tag_full}:latest"
             }
         }
         /*
