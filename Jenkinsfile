@@ -10,8 +10,14 @@ pipeline {
                 dockerfile true
             }
             steps {
+                // check packages
                 sh 'pip list'
+                // Install hadolint
+                sh "wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64"
+                sh "chmod +x /bin/hadolint"
+                // run tests
                 sh 'make lint'
+                sh 'make test'
             }
         }
         stage('Lint HTML') {
@@ -24,7 +30,8 @@ pipeline {
             agent any
             steps {
                 script {
-                    dockerImage = docker.build registry + "fancy_app_image:$BUILD_NUMBER"
+                    dockerImage = docker.build("$(env.registry)/fancy_app_image:${env.BUILD_ID}")
+                    //dockerImage = docker.build registry + "fancy_app_image:$BUILD_NUMBER"
                 }
             }
         }
