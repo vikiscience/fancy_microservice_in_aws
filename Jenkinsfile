@@ -8,7 +8,7 @@ pipeline {
         dockerImage = ''
         port = 8085
     }
-    agent none
+    agent any
     stages {
         stage('Echo') {
             agent any
@@ -112,7 +112,7 @@ pipeline {
         stage('Run image and test') {
             agent any
             steps {
-                sh "docker run -d --rm -p ${env.port}:${env.port} --name ${env.image_tag}"
+                sh "docker run -d --rm -p ${env.port}:${env.port} --name ${env.image_tag} ${env.image_tag_full}:${env.BUILD_ID}"
                 catchError {
                     sh 'make lint'
                     sh 'make test'
