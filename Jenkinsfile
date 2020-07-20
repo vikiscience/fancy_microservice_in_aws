@@ -5,6 +5,18 @@ pipeline {
     }
     agent none
     stages {
+        stage('Lint HTML') {
+            agent any
+            steps {
+                sh 'tidy -q -e templates/*.html'
+            }
+        }
+        stage('Lint Dockerfile') {
+            agent any
+            steps {
+                sh 'hadolint Dockerfile'
+            }
+        }
         stage('Lint SRC') {
             agent {
                 dockerfile true
@@ -12,18 +24,9 @@ pipeline {
             steps {
                 // check packages
                 sh 'pip list'
-                // Install hadolint
-                sh "wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64"
-                sh "chmod +x /bin/hadolint"
                 // run tests
                 sh 'make lint'
                 sh 'make test'
-            }
-        }
-        stage('Lint HTML') {
-            agent any
-            steps {
-                sh 'tidy -q -e templates/*.html'
             }
         }
         stage('Build image') {
