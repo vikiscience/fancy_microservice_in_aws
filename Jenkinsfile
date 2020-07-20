@@ -1,9 +1,11 @@
 pipeline {
     environment {
+        registryUrl = 'https://hub.docker.com/r/'
         registry = "bitelds/demos"
         dockerImage = ''
         port = 8085
         image_tag = 'fancy_app_image'
+        image_tag_full = registry + '/' + image_tag
     }
     agent none
     stages {
@@ -12,6 +14,11 @@ pipeline {
             steps {
                 sh "echo ${env.BUILD_ID}"
                 sh "echo ${env.BUILD_NUMBER}"
+                sh "echo ${env.registryUrl}"
+                sh "echo ${env.registry}"
+                sh "echo ${env.image_tag}"
+                sh "echo ${env.image_tag_full}"
+                sh "echo ${env.port}"
             }
         }
         stage('Lint HTML') {
@@ -99,7 +106,7 @@ pipeline {
             agent any
             steps {
                 script {
-                    docker.withRegistry('') {
+                    docker.withRegistry("${env.registryUrl}") {
                         dockerImage.push()
                     }
                 }
@@ -109,7 +116,7 @@ pipeline {
             agent {
                 docker {
                     image 'bitelds/demos/fancy_app_image'
-                    registryUrl 'https://hub.docker.com/r/'
+                    registryUrl "${env.registryUrl}"
                 }
             }
             steps {
