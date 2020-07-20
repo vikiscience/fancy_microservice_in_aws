@@ -30,7 +30,7 @@ pipeline {
             agent any
             steps {
                 script {
-                    dockerImage = docker.build("$(env.registry)/fancy_app_image:${env.BUILD_ID}")
+                    dockerImage = docker.build("${env.registry}/fancy_app_image:${env.BUILD_ID}")
                     //dockerImage = docker.build registry + "fancy_app_image:$BUILD_NUMBER"
                 }
             }
