@@ -23,7 +23,9 @@ pipeline {
             agent {
                 //dockerfile true
                 dockerfile {
-                    args "--no-cache --rm -t ${env.image_tag}"
+                    //args "--no-cache --rm -t ${env.image_tag}"
+                    additionalBuildArgs "--no-cache --rm -t ${env.image_tag}"
+                    args "-i --rm -p ${env.port}:${env.port} --name ${env.image_tag}"
                 }
             }
             steps {
@@ -59,7 +61,7 @@ pipeline {
 
                     docker run $DOCKER_RUN_OPTIONS --name ${env.image_tag} ${env.image_tag}
                     '''
-                    sh "docker run $DOCKER_RUN_OPTIONS --rm -p ${env.port}:${env.port} ${env.image_tag}"
+                    sh "docker run $DOCKER_RUN_OPTIONS -p ${env.port}:${env.port} --name ${env.image_tag}"
                 }
 
             }
