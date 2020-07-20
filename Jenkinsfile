@@ -17,7 +17,7 @@ pipeline {
                 sh 'hadolint Dockerfile'
             }
         }
-        stage('Lint SRC') {
+        stage('Test code') {
             agent {
                 dockerfile true
             }

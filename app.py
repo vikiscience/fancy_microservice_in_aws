@@ -1,10 +1,6 @@
-from flask import Flask, request, jsonify, render_template, url_for
+from flask import Flask, request, jsonify, render_template
 from flask.logging import create_logger
 import logging
-
-import pandas as pd
-from sklearn.externals import joblib
-from sklearn.preprocessing import StandardScaler
 
 
 app = Flask(__name__)
