@@ -1,11 +1,10 @@
 pipeline {
     environment {
-        //registryUrl = 'https://hub.docker.com/r/'
         registryUrl = "https://registry-1.docker.io/v2/"
         registryCreds = credentials("docker-hub-creds")
-        registry = "bitelds/demos"
-        image_tag = 'fancy_app_image'
-        image_tag_full = "${registry}/${image_tag}"
+        registry = "bitelds"
+        image_name = 'fancy_app_image'
+        image_name_full = "${registry}/${image_name}"
         dockerImage = ''
         port = 8085
     }
@@ -19,8 +18,8 @@ pipeline {
                 sh "echo ${env.registryUrl}"
                 sh "echo ${env.registryCreds}"
                 sh "echo ${env.registry}"
-                sh "echo ${env.image_tag}"
-                sh "echo ${env.image_tag_full}"
+                sh "echo ${env.image_name}"
+                sh "echo ${env.image_name_full}"
                 sh "echo ${env.port}"
             }
         }
@@ -40,7 +39,7 @@ pipeline {
             agent any
             steps {
                 // build image for testing
-                //sh "docker build --no-cache --rm -t ${env.image_tag} ."
+                //sh "docker build --no-cache --rm -t ${env.image_name} ."
                 sh "docker images"
             }
         }
@@ -49,9 +48,9 @@ pipeline {
             agent {
                 //dockerfile true
                 dockerfile {
-                    //args "--no-cache --rm -t ${env.image_tag}"
-                    additionalBuildArgs "--no-cache --rm -t ${env.image_tag}"
-                    args "-i --rm -p ${env.port}:${env.port} --name ${env.image_tag}"
+                    //args "--no-cache --rm -t ${env.image_name}"
+                    additionalBuildArgs "--no-cache --rm -t ${env.image_name}"
+                    args "-i --rm -p ${env.port}:${env.port} --name ${env.image_name}"
                 }
             }
             steps {
@@ -72,7 +71,7 @@ pipeline {
                 // allow for errors in this step
                 catchError {
                     // run image for testing
-                    //sh "docker run -i -t --rm -p ${env.port}:${env.port} ${env.image_tag}"
+                    //sh "docker run -i -t --rm -p ${env.port}:${env.port} ${env.image_name}"
                     //sh 'make test'
                     sh '''
                     DOCKER_RUN_OPTIONS="-i --rm"
@@ -82,9 +81,9 @@ pipeline {
                         DOCKER_RUN_OPTIONS="$DOCKER_RUN_OPTIONS -t"
                     fi
 
-                    docker run $DOCKER_RUN_OPTIONS --name ${env.image_tag} ${env.image_tag}
+                    docker run $DOCKER_RUN_OPTIONS --name ${env.image_name} ${env.image_name}
                     '''
-                    sh "docker run $DOCKER_RUN_OPTIONS -p ${env.port}:${env.port} --name ${env.image_tag}"
+                    sh "docker run $DOCKER_RUN_OPTIONS -p ${env.port}:${env.port} --name ${env.image_name}"
                 }
 
             }
@@ -93,7 +92,7 @@ pipeline {
             agent any
             steps {
                 script {
-                    dockerImage = docker.build("${env.image_tag_full}:${env.BUILD_ID}")
+                    dockerImage = docker.build("${env.image_name_full}:${env.BUILD_ID}")
                     //dockerImage = docker.build registry + "fancy_app_image:$BUILD_NUMBER"
                     dockerImage.inside {
                         withEnv(['PYLINTHOME=.']) {
@@ -108,13 +107,13 @@ pipeline {
         stage('Build image') {
             agent any
             steps {
-                sh "docker build --no-cache --rm -t ${env.image_tag_full}:${env.BUILD_ID} -t ${env.image_tag_full}:latest ."
+                sh "docker build --no-cache --rm -t ${env.image_name_full}:${env.BUILD_ID} -t ${env.image_name_full}:latest ."
             }
         }
         stage('Run image and test') {
             agent any
             steps {
-                sh "docker run -d --rm -p ${env.port}:${env.port} --name ${env.image_tag} ${env.image_tag_full}:${env.BUILD_ID}"
+                sh "docker run -d --rm -p ${env.port}:${env.port} --name ${env.image_name} ${env.image_name_full}:${env.BUILD_ID}"
                 catchError {
                     withEnv(['PYLINTHOME=.']) {
                         sh "pylint --exit-zero --disable=R,C,W1203 app.py"
@@ -135,23 +134,23 @@ pipeline {
                 }
                 */
                 sh "docker login --username bitelds -p ${env.registryCreds}"
-                sh "docker push ${env.image_tag_full}:${env.BUILD_ID}"
-                sh "docker push ${env.image_tag_full}:latest"
+                sh "docker push ${env.image_name_full}:${env.BUILD_ID}"
+                sh "docker push ${env.image_name_full}:latest"
             }
         }
         /*
         stage('Remove unused docker image') {
             agent any
             steps{  //todo stop container
-                sh "docker rmi ${env.image_tag_full}:${env.BUILD_ID}"
+                sh "docker rmi ${env.image_name_full}:${env.BUILD_ID}"
             }
         }*/
     }
     post {
         always {
-            sh "docker stop ${env.image_tag}"
-            sh "docker rmi ${env.image_tag_full}:${env.BUILD_ID}"
-            sh "docker rmi ${env.image_tag_full}:latest"
+            sh "docker stop ${env.image_name}"
+            sh "docker rmi ${env.image_name_full}:${env.BUILD_ID}"
+            sh "docker rmi ${env.image_name_full}:latest"
             sh "docker system prune"
         }
     }
