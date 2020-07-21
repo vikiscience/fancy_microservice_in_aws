@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey":  "TagName",
+    "ParameterValue": "purpose"
+  },
+  {
+    "ParameterKey":  "TagValue",
+    "ParameterValue": "project"
+  },
+  {
+    "ParameterKey":  "EnvironmentName",
+    "ParameterValue": "udacity-prj-env"
+  },
+  {
+    "ParameterKey":  "ClusterName",
+    "ParameterValue": "fancy_cluster"
+  },
+  {
+    "ParameterKey":  "NumNodes",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "EC2InstanceType",
+    "ParameterValue": "t2.micro"
+  }
+]

@@ -1,0 +1,138 @@
+Description: Udacity PRJ Capstone Infrastructure for the Fancy App!
+
+###############################################################################
+
+Parameters:
+
+  TagName:
+    Description: Name of the tag
+    Type: String
+    Default: bla
+
+  TagValue:
+    Description: Value of the tag
+    Type: String
+    Default: bla
+
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: bla
+
+  ClusterName:
+    Description: Name of Kubernetes Cluster
+    Type: String
+    Default: my_cluster
+
+  NumNodes:
+    Description: Number of servers to deploy in each private subnet
+    Type: String
+    Default: 1
+
+  EC2InstanceType:
+    Description: >
+      Server instance type:
+      -> t2.medium --> 2 CPU, 4 GB RAM (AWS default)
+      -> t2.micro --> 1 CPU, 1 GB RAM (free tier eligible)
+    Type: String
+    Default: t2.micro
+
+
+###############################################################################
+
+Resources:
+
+### --------------------------- Security Groups -------------------------------
+
+  ClusterSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow all traffic inside the Cluster
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:  # Inbound, allow all public traffic (0.0.0.0/0) on all ports
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:  # Outbound, allow all public traffic (0.0.0.0/0) on all ports
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: !Ref TagName
+          Value: !Ref TagValue
+
+  WebAppSecGroup:   # todo add Sec Gr for my app
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP to the EC2 hosts
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:  # Inbound, open only port 80
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:  # Outbound, unrestricted internet access (download, update software)
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: !Ref TagName
+          Value: !Ref TagValue
+
+
+### --------------------------- Cluster -------------------------------
+
+  MyCluster:
+    Type: 'AWS::EKS::Cluster'
+    Properties:
+      Name: !Ref ClusterName
+      Version: '1.14'
+      RoleArn: >-
+        arn:aws:iam::539939707481:role/eksClusterRole
+      ResourcesVpcConfig:
+        SecurityGroupIds:
+          - !Ref ClusterSecGroup
+          - !Ref WebAppSecGroup
+        SubnetIds:
+          - Fn::ImportValue: !Sub "${EnvironmentName}-PRI1-SN"
+          - Fn::ImportValue: !Sub "${EnvironmentName}-PRI2-SN"  # todo?
+
+  EKSNodegroup:
+    Type: 'AWS::EKS::Nodegroup'
+    Properties:
+      AmiType: AL2_x86_64
+      ClusterName: !Ref ClusterName
+      DiskSize: 8
+      InstanceTypes: !Ref EC2InstanceType
+      NodegroupName: fancy_nodes
+      NodeRole: arn:aws:iam::539939707481:role/NodeInstanceRole
+      ScalingConfig:
+        MinSize: 1
+        DesiredSize: 1
+        MaxSize: 1
+      Labels:
+        Key1: Value1
+        Key2: Value2
+      Subnets:
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PRI1-SN"
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PRI2-SN"
+      Tags:
+        - Key: !Ref TagName
+          Value: !Ref TagValue
+
+###############################################################################
+
+Outputs:
+
+    MyCluster:
+      Description: The endpoint for the Kubernetes API server
+      Value: !GetAtt MyCluster.Endpoint
+      Export:
+        Name: !Sub ${EnvironmentName}-CLU-DNS
