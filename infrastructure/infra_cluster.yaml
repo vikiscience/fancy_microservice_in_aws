@@ -33,7 +33,7 @@ Parameters:
     Description: >
       Server instance type:
       -> t2.medium --> 2 CPU, 4 GB RAM (AWS default)
-      -> t2.micro --> 1 CPU, 1 GB RAM (free tier eligible)
+      -> t2.micro --> 1 CPU, 1 GB RAM (free tier eligible, but too small to deploy anything)
     Type: String
     Default: t2.micro
 
@@ -65,7 +65,7 @@ Resources:
         - Key: !Ref TagName
           Value: !Ref TagValue
 
-  WebAppSecGroup:   # todo add Sec Gr for my app
+  WebAppSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow HTTP to the EC2 hosts
@@ -93,7 +93,7 @@ Resources:
     Type: 'AWS::EKS::Cluster'
     Properties:
       Name: !Ref ClusterName
-      Version: '1.14'
+      Version: '1.17'
       RoleArn: >-
         arn:aws:iam::539939707481:role/eksClusterRole
       ResourcesVpcConfig:
@@ -102,15 +102,16 @@ Resources:
           - !Ref WebAppSecGroup
         SubnetIds:
           - Fn::ImportValue: !Sub "${EnvironmentName}-PRI1-SN"
-          - Fn::ImportValue: !Sub "${EnvironmentName}-PRI2-SN"  # todo?
+          - Fn::ImportValue: !Sub "${EnvironmentName}-PRI2-SN"
 
   EKSNodegroup:
+    DependsOn: MyCluster
     Type: 'AWS::EKS::Nodegroup'
     Properties:
       AmiType: AL2_x86_64
       ClusterName: !Ref ClusterName
       DiskSize: 8
-      InstanceTypes: !Ref EC2InstanceType
+      InstanceTypes: [!Ref EC2InstanceType]
       NodegroupName: fancy_nodes
       NodeRole: arn:aws:iam::539939707481:role/NodeInstanceRole
       ScalingConfig:
@@ -124,8 +125,9 @@ Resources:
         - Fn::ImportValue: !Sub "${EnvironmentName}-PRI1-SN"
         - Fn::ImportValue: !Sub "${EnvironmentName}-PRI2-SN"
       Tags:
-        - Key: !Ref TagName
-          Value: !Ref TagValue
+        purpose: project  # Type: Json
+        #- Key: !Ref TagName
+        #  Value: !Ref TagValue
 
 ###############################################################################
 
