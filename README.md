@@ -1,5 +1,6 @@
 [//]: # (Image References)
 
+[image0]: infrastructure/images/Docker_Repo.PNG
 [image1]: infrastructure/images/Deploy_Before.PNG
 [image2]: infrastructure/images/Deploy_During.PNG
 [image3]: infrastructure/images/Deploy_After.PNG
@@ -12,6 +13,13 @@ An ML microservice is deployed to Kubernetes Cluster in AWS via CI/CD pipeline u
 
 
 ## Prerequisites
+
+#### DockerHub repository
+
+The docker images with the application inside are uploaded here by the Jenkins pipeline:
+
+![Deployment][image0]
+
 
 #### Jenkins server:
 
