@@ -44,7 +44,7 @@ pipeline {
         }
         stage('Run image and test') {
             steps {
-                sh "docker run -d --rm -p ${env.port}:${env.port} --name ${env.image_name} ${env.image_name_full}:${env.BUILD_ID} sh -c 'pylint --disable=R,C,W1203 app.py; exit $?'"
+                sh "docker run -d --rm -p ${env.port}:${env.port} --name ${env.image_name} ${env.image_name_full}:${env.BUILD_ID} pylint --disable=R,C,W1203 app.py"
             }
         }
         stage('Push image to Docker Hub') {
